@@ -39,7 +39,28 @@ $hotels = [
     ],
 
 ];
+// Filtro inizialmente impostato su tutti gli hotel
+$filteredHotels = $hotels;
 
+// Filtro per il parcheggio
+$parkingFilter = isset($_GET['parking']) ? $_GET['parking'] === 'on' : false;
+
+// Filtro per il voto
+$voteFilter = isset($_GET['vote']) ? (int)$_GET['vote'] : null;
+
+// Filtrare per parcheggio
+if ($parkingFilter) {
+    $filteredHotels = array_filter($filteredHotels, function($hotel) {
+        return $hotel['parking'];
+    });
+}
+
+// Filtrare per voto
+if ($voteFilter) {
+    $filteredHotels = array_filter($filteredHotels, function($hotel) use ($voteFilter) {
+        return $hotel['vote'] >= $voteFilter;
+    });
+}
 
 
 ?>
@@ -68,10 +89,31 @@ $hotels = [
         .center {
             text-align: center;
         }
+        .filter-container {
+            text-align: center;
+            margin: 20px;
+        }
     </style>
 </head>
 <body>
-   
+    <div class="filter-container">
+        <form method="GET" action="">
+            <label>
+                <input type="checkbox" name="parking" <?php echo $parkingFilter ? 'checked' : ''; ?>>
+                Solo hotel con parcheggio
+            </label>
+            <label>
+                Voto minimo:
+                <select name="vote">
+                    <option value="">---</option>
+                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                        <option value="<?php echo $i; ?>" <?php echo ($voteFilter == $i) ? 'selected' : ''; ?>><?php echo $i; ?></option>
+                    <?php endfor; ?>
+                </select>
+            </label>
+            <button type="submit">Filtra</button>
+        </form>
+    </div>
 
     <table>
         <thead>
@@ -84,15 +126,21 @@ $hotels = [
             </tr>
         </thead>
         <tbody>
-            <?php foreach($hotels as $hotel): ?>
+            <?php if (count($filteredHotels) > 0): ?>
+                <?php foreach($filteredHotels as $hotel): ?>
+                    <tr>
+                        <td><?php echo $hotel['name']; ?></td>
+                        <td><?php echo $hotel['description']; ?></td>
+                        <td class="center"><?php echo $hotel['parking'] ? 'Si' : 'No'; ?></td>
+                        <td class="center"><?php echo $hotel['vote']; ?></td>
+                        <td class="center"><?php echo $hotel['distance_to_center'] . ' Km'; ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
                 <tr>
-                    <td><?php echo $hotel['name']; ?></td>
-                    <td><?php echo $hotel['description'] ?></td>
-                    <td class="center" ><?php echo $hotel['parking'] ? "Si" : "No"?></td>
-                    <td class="center" ><?php echo $hotel['vote']?></td>
-                    <td class="center" ><?php echo $hotel['distance_to_center'] . " " . "Km" ?></td>
+                    <td colspan="5" class="center">Nessun hotel trovato con i criteri selezionati.</td>
                 </tr>
-            <?php endforeach ?> 
+            <?php endif; ?> 
         </tbody>
     </table>
 </body>
